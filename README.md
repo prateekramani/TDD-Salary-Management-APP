@@ -43,8 +43,14 @@ Following strict TDD:
 ```
 .
 ├── app.py              # Flask application factory
-├── models.py           # Database models
-├── routes.py           # API routes
+├── models.py           # Database models (SQLAlchemy)
+├── routes/             # Routes layer - HTTP routing only
+│   ├── __init__.py     # Registers all route blueprints
+│   ├── employee_routes.py  # Employee CRUD routes
+│   └── salary_routes.py   # Salary calculation & metrics routes
+├── controllers.py      # Controller layer - request/response logic & validation
+├── services.py         # Service layer - business logic & database operations
+├── constants.py        # Application constants (TDS rates, countries)
 ├── tests/              # Test files
 │   └── test_employee.py
 ├── requirements.txt    # Python dependencies
@@ -52,4 +58,36 @@ Following strict TDD:
 ├── .gitignore         # Git ignore file
 └── README.md          # This file
 ```
+
+## Architecture
+
+The application follows a **layered architecture** pattern:
+
+1. **Routes Layer** (`routes/`)
+   - Handles HTTP routing only
+   - Organized by feature (employee_routes.py, salary_routes.py)
+   - Maps URLs to controller functions
+   - No business logic or database calls
+
+2. **Controller Layer** (`controllers.py`)
+   - Handles request/response logic
+   - Input validation
+   - Calls service layer functions
+   - Formats responses
+
+3. **Service Layer** (`services.py`)
+   - Contains all business logic
+   - Handles all database operations (CRUD)
+   - Pure business logic functions
+   - No HTTP concerns
+
+4. **Models Layer** (`models.py`)
+   - Database models using SQLAlchemy
+   - Data structure definitions
+
+This separation ensures:
+- **Testability**: Each layer can be tested independently
+- **Maintainability**: Clear separation of concerns
+- **Scalability**: Easy to add new features or modify existing ones
+- **Production-ready**: Follows industry best practices
 

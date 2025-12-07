@@ -15,9 +15,12 @@ def create_app():
     # Import models to ensure they're registered
     from models import Employee
     
+    # Import controllers to ensure they're loaded
+    import controllers
+    
     # Register routes
-    from routes import employee_bp
-    app.register_blueprint(employee_bp, url_prefix='/api')
+    from routes import register_routes
+    register_routes(app)
     
     return app
 
