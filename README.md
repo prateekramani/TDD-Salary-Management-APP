@@ -42,7 +42,9 @@ Following strict TDD:
 
 ```
 .
-├── app.py              # Flask application (models + routes in one file)
+├── app.py              # Flask application factory
+├── models.py           # Database models
+├── routes.py           # API routes
 ├── tests/              # Test files
 │   └── test_employee.py
 ├── requirements.txt    # Python dependencies

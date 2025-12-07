@@ -1,5 +1,6 @@
 import pytest
-from app import create_app, db, Employee
+from app import create_app, db
+from models import Employee
 
 
 @pytest.fixture
