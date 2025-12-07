@@ -200,3 +200,79 @@ def test_calculate_salary_nonexistent_employee(client):
     
     assert response.status_code == 404
 
+
+def test_salary_metrics_by_country(client):
+    """Test salary metrics (min, max, average) for a country"""
+    # Create employees in India with different salaries
+    client.post('/api/employees', json={
+        'full_name': 'Raj Kumar',
+        'job_title': 'Developer',
+        'country': 'India',
+        'salary': 80000
+    })
+    client.post('/api/employees', json={
+        'full_name': 'Priya Sharma',
+        'job_title': 'Manager',
+        'country': 'India',
+        'salary': 120000
+    })
+    client.post('/api/employees', json={
+        'full_name': 'Amit Patel',
+        'job_title': 'Designer',
+        'country': 'India',
+        'salary': 100000
+    })
+    
+    response = client.get('/api/salary-metrics?country=India')
+    
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['country'] == 'India'
+    assert data['minimum_salary'] == 80000
+    assert data['maximum_salary'] == 120000
+    assert data['average_salary'] == 100000.0  # (80000 + 120000 + 100000) / 3
+
+
+def test_salary_metrics_by_country_no_employees(client):
+    """Test salary metrics for country with no employees"""
+    response = client.get('/api/salary-metrics?country=Germany')
+    
+    assert response.status_code == 404
+
+
+def test_average_salary_by_job_title(client):
+    """Test average salary for a specific job title"""
+    # Create employees with same job title
+    client.post('/api/employees', json={
+        'full_name': 'John Developer',
+        'job_title': 'Software Engineer',
+        'country': 'United States',
+        'salary': 100000
+    })
+    client.post('/api/employees', json={
+        'full_name': 'Jane Developer',
+        'job_title': 'Software Engineer',
+        'country': 'India',
+        'salary': 80000
+    })
+    client.post('/api/employees', json={
+        'full_name': 'Bob Developer',
+        'job_title': 'Software Engineer',
+        'country': 'Canada',
+        'salary': 90000
+    })
+    
+    response = client.get('/api/salary-metrics?job_title=Software Engineer')
+    
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['job_title'] == 'Software Engineer'
+    assert data['average_salary'] == 90000.0  # (100000 + 80000 + 90000) / 3
+
+
+def test_average_salary_by_job_title_no_employees(client):
+    """Test average salary for job title with no employees"""
+    response = client.get('/api/salary-metrics?job_title=CEO')
+    
+    assert response.status_code == 404
+
