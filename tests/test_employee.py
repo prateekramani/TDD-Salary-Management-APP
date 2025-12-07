@@ -130,3 +130,73 @@ def test_delete_employee(client):
     get_response = client.get(f'/api/employees/{employee_id}')
     assert get_response.status_code == 404
 
+
+def test_calculate_salary_india(client):
+    """Test salary calculation for India (10% TDS)"""
+    # Create an employee in India
+    create_response = client.post('/api/employees', json={
+        'full_name': 'Raj Kumar',
+        'job_title': 'Developer',
+        'country': 'India',
+        'salary': 100000
+    })
+    employee_id = create_response.get_json()['id']
+    
+    # Calculate salary
+    response = client.get(f'/api/employees/{employee_id}/calculate-salary')
+    
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['gross_salary'] == 100000
+    assert data['tds'] == 10000  # 10% of 100000
+    assert data['net_salary'] == 90000  # 100000 - 10000
+
+
+def test_calculate_salary_united_states(client):
+    """Test salary calculation for United States (12% TDS)"""
+    # Create an employee in United States
+    create_response = client.post('/api/employees', json={
+        'full_name': 'John Smith',
+        'job_title': 'Manager',
+        'country': 'United States',
+        'salary': 120000
+    })
+    employee_id = create_response.get_json()['id']
+    
+    # Calculate salary
+    response = client.get(f'/api/employees/{employee_id}/calculate-salary')
+    
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['gross_salary'] == 120000
+    assert data['tds'] == 14400  # 12% of 120000
+    assert data['net_salary'] == 105600  # 120000 - 14400
+
+
+def test_calculate_salary_other_country(client):
+    """Test salary calculation for other countries (no deductions)"""
+    # Create an employee in Canada
+    create_response = client.post('/api/employees', json={
+        'full_name': 'Alice Brown',
+        'job_title': 'Designer',
+        'country': 'Canada',
+        'salary': 90000
+    })
+    employee_id = create_response.get_json()['id']
+    
+    # Calculate salary
+    response = client.get(f'/api/employees/{employee_id}/calculate-salary')
+    
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['gross_salary'] == 90000
+    assert data['tds'] == 0  # No deductions
+    assert data['net_salary'] == 90000  # Same as gross
+
+
+def test_calculate_salary_nonexistent_employee(client):
+    """Test salary calculation for non-existent employee"""
+    response = client.get('/api/employees/999/calculate-salary')
+    
+    assert response.status_code == 404
+
