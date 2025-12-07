@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from app import db
 from models import Employee
+from services import calculate_net_salary
 
 employee_bp = Blueprint('employees', __name__)
 
@@ -9,11 +10,21 @@ employee_bp = Blueprint('employees', __name__)
 def create_employee():
     """Create a new employee"""
     data = request.get_json()
+    
+    # Validate required fields
+    required_fields = ['full_name', 'job_title', 'country', 'salary']
+    if not data or not all(field in data for field in required_fields):
+        return jsonify({'error': 'Missing required fields'}), 400
+    
+    # Validate salary is positive
+    if not isinstance(data['salary'], (int, float)) or data['salary'] < 0:
+        return jsonify({'error': 'Salary must be a positive number'}), 400
+    
     employee = Employee(
         full_name=data['full_name'],
         job_title=data['job_title'],
         country=data['country'],
-        salary=data['salary']
+        salary=float(data['salary'])
     )
     db.session.add(employee)
     db.session.commit()
@@ -39,10 +50,23 @@ def update_employee(employee_id):
     """Update an employee"""
     employee = Employee.query.get_or_404(employee_id)
     data = request.get_json()
-    employee.full_name = data['full_name']
-    employee.job_title = data['job_title']
-    employee.country = data['country']
-    employee.salary = data['salary']
+    
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    # Validate salary if provided
+    if 'salary' in data:
+        if not isinstance(data['salary'], (int, float)) or data['salary'] < 0:
+            return jsonify({'error': 'Salary must be a positive number'}), 400
+        employee.salary = float(data['salary'])
+    
+    if 'full_name' in data:
+        employee.full_name = data['full_name']
+    if 'job_title' in data:
+        employee.job_title = data['job_title']
+    if 'country' in data:
+        employee.country = data['country']
+    
     db.session.commit()
     return jsonify(employee.to_dict()), 200
 
@@ -58,24 +82,14 @@ def delete_employee(employee_id):
 
 @employee_bp.route('/employees/<int:employee_id>/calculate-salary', methods=['GET'])
 def calculate_salary(employee_id):
-    """Calculate deductions and net salary for an employee"""
+    """
+    Calculate deductions and net salary for an employee.
+    
+    Returns 404 if employee doesn't exist (handled by get_or_404).
+    """
     employee = Employee.query.get_or_404(employee_id)
     
-    gross_salary = employee.salary
+    salary_data = calculate_net_salary(employee.salary, employee.country)
     
-    # Calculate TDS based on country
-    if employee.country == 'India':
-        tds = gross_salary * 0.10  # 10% TDS
-    elif employee.country == 'United States':
-        tds = gross_salary * 0.12  # 12% TDS
-    else:
-        tds = 0  # No deductions for other countries
-    
-    net_salary = gross_salary - tds
-    
-    return jsonify({
-        'gross_salary': gross_salary,
-        'tds': tds,
-        'net_salary': net_salary
-    }), 200
+    return jsonify(salary_data), 200
 
