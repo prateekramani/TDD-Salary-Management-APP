@@ -55,3 +55,27 @@ def delete_employee(employee_id):
     db.session.commit()
     return '', 204
 
+
+@employee_bp.route('/employees/<int:employee_id>/calculate-salary', methods=['GET'])
+def calculate_salary(employee_id):
+    """Calculate deductions and net salary for an employee"""
+    employee = Employee.query.get_or_404(employee_id)
+    
+    gross_salary = employee.salary
+    
+    # Calculate TDS based on country
+    if employee.country == 'India':
+        tds = gross_salary * 0.10  # 10% TDS
+    elif employee.country == 'United States':
+        tds = gross_salary * 0.12  # 12% TDS
+    else:
+        tds = 0  # No deductions for other countries
+    
+    net_salary = gross_salary - tds
+    
+    return jsonify({
+        'gross_salary': gross_salary,
+        'tds': tds,
+        'net_salary': net_salary
+    }), 200
+
