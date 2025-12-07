@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from sqlalchemy import func
 from app import db
 from models import Employee
 from services import calculate_net_salary
@@ -92,4 +93,54 @@ def calculate_salary(employee_id):
     salary_data = calculate_net_salary(employee.salary, employee.country)
     
     return jsonify(salary_data), 200
+
+
+@employee_bp.route('/salary-metrics', methods=['GET'])
+def get_salary_metrics():
+    """
+    Get salary metrics by country or job title.
+    
+    Query parameters:
+    - country: Get min, max, and average salary for a country
+    - job_title: Get average salary for a job title
+    
+    Returns 404 if no employees found.
+    """
+    country = request.args.get('country')
+    job_title = request.args.get('job_title')
+    
+    if country:
+        # Get salary metrics by country
+        result = db.session.query(
+            func.min(Employee.salary).label('min_salary'),
+            func.max(Employee.salary).label('max_salary'),
+            func.avg(Employee.salary).label('avg_salary')
+        ).filter(Employee.country == country).first()
+        
+        if not result or result.min_salary is None:
+            return jsonify({'error': 'No employees found for this country'}), 404
+        
+        return jsonify({
+            'country': country,
+            'minimum_salary': float(result.min_salary),
+            'maximum_salary': float(result.max_salary),
+            'average_salary': round(float(result.avg_salary), 2)
+        }), 200
+    
+    elif job_title:
+        # Get average salary by job title
+        result = db.session.query(
+            func.avg(Employee.salary).label('avg_salary')
+        ).filter(Employee.job_title == job_title).first()
+        
+        if not result or result.avg_salary is None:
+            return jsonify({'error': 'No employees found for this job title'}), 404
+        
+        return jsonify({
+            'job_title': job_title,
+            'average_salary': round(float(result.avg_salary), 2)
+        }), 200
+    
+    else:
+        return jsonify({'error': 'Please provide either country or job_title parameter'}), 400
 
