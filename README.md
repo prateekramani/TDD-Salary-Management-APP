@@ -42,21 +42,24 @@ Following strict TDD:
 
 ```
 .
-├── app.py              # Flask application factory
-├── models.py           # Database models (SQLAlchemy)
-├── routes/             # Routes layer - HTTP routing only
-│   ├── __init__.py     # Registers all route blueprints
-│   ├── employee_routes.py  # Employee CRUD routes
-│   └── salary_routes.py   # Salary calculation & metrics routes
-├── controllers.py      # Controller layer - request/response logic & validation
-├── services.py         # Service layer - business logic & database operations
-├── constants.py        # Application constants (TDS rates, countries)
-├── tests/              # Test files
-│   └── test_employee.py
-├── requirements.txt    # Python dependencies
-├── pytest.ini         # Pytest configuration
-├── .gitignore         # Git ignore file
-└── README.md          # This file
+├── src/                 # Application source
+│   ├── app.py              # Flask application entry (runs the app)
+│   ├── models.py           # Database models (SQLAlchemy ORM)
+│   ├── routes/             # HTTP route blueprints
+│   │   ├── __init__.py     # Registers route blueprints with the app
+│   │   ├── employee_routes.py  # Employee CRUD endpoints
+│   │   └── salary_routes.py    # Salary calculation & metrics endpoints
+│   ├── controllers.py      # Request handling, validation, response formatting
+│   ├── services.py         # Business logic & DB operations
+│   ├── constants.py        # Application constants (e.g. tax rates, supported countries)
+│   └── instance/           # Runtime files (SQLite DB)
+│       └── employees.db    # Example SQLite database used in development/tests
+├── tests/                 # Test suite
+│   └── test_employee.py    # Unit tests for employee functionality
+├── requirements.txt       # Python dependencies
+├── pytest.ini             # Pytest configuration
+├── .gitignore             # Git ignore file
+└── README.md              # This file
 ```
 
 ## Architecture
