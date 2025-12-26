@@ -131,6 +131,32 @@ def test_delete_employee(client):
     assert get_response.status_code == 404
 
 
+# @pytest.mark.parametrize("country, expected_tds_rate", [
+#     pytest.param("India", 0.10, id="India_TDS 10%"), 
+#     pytest.param("United States", 0.12, id="US_TDS 12%"),
+# ])
+@pytest.mark.parametrize("country, expected_tds_rate", [("India", 0.10), ("United States", 0.12)], ids=["India TDS 10%", "US TDS 12%"])
+def test_calculate_salary(client, country, expected_tds_rate):
+    # Create an employee in the specified country
+    create_response = client.post('/api/employees', json={
+        'full_name': 'John Smith',
+        'job_title': 'Manager',
+        'country': country,
+        'salary': 120000
+    })
+    employee_id = create_response.get_json()['id']
+
+    # Calculate salary
+    response = client.get(f'/api/employees/{employee_id}/calculate-salary')
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['gross_salary'] == 120000
+    assert data['tds'] == 120000 * expected_tds_rate  # 10% of 120000
+    assert data['net_salary'] == 120000 - (120000 * expected_tds_rate)  # 120000 - TDS
+    
+
+
 def test_calculate_salary_india(client):
     """Test salary calculation for India (10% TDS)"""
     # Create an employee in India
